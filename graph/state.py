@@ -1,5 +1,6 @@
-from pydantic import BaseModel
-from typing import List, Optional, Annotated
+from typing import Annotated, List, Optional
+
+from pydantic import BaseModel, ConfigDict
 
 try:
     from langgraph.graph.message import add_messages
@@ -9,6 +10,8 @@ except Exception:  # langgraph may not be installed in this environment yet
 
 
 class PatientCase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     patient_id: str
     symptoms: List[str] = []
     medical_history: str = ""
@@ -23,5 +26,3 @@ class PatientCase(BaseModel):
     audit_log: List[str] = []
     timestamp: str = ""
 
-    class Config:
-        extra = "forbid"

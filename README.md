@@ -80,11 +80,32 @@ Build a **stateful, production-ready multi-agent platform** using **LangGraph** 
 ```bash
 git clone <your-repo>
 cd mcip-langgraph
-python -m venv venv
-source venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
+
+### Local Development Workflow
+
+Run the sample workflow:
+
+```bash
+python main.py
+```
+
+Run the intake test:
+
+```bash
+pytest -q tests/test_intake_node.py
+```
+
+### Notes for New Developers
+
+- The project is currently designed to run locally with the core Python dependencies from requirements.txt.
+- Development-only tools such as pytest are kept in requirements-dev.txt.
+- If you plan to work with Vertex AI or cloud integrations, make sure your environment variables and GCP credentials are configured before enabling those features.
 
 ### Project Structure
 

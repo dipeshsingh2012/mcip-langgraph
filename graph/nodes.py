@@ -1,17 +1,21 @@
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
+from agents.intake_agent import build_intake_summary, normalize_intake_payload
+
 
 def _append_audit(state: Dict[str, Any], event: str) -> None:
     state.setdefault("audit_log", []).append(event)
 
 
 def intake_node(state: Dict[str, Any]) -> Dict[str, Any]:
-    state.setdefault("symptoms", state.get("symptoms") or [])
-    state.setdefault("medical_history", state.get("medical_history") or "")
-    state.setdefault("current_medications", state.get("current_medications") or [])
-    state.setdefault("lab_results", state.get("lab_results") or "")
-    state.setdefault("messages", state.get("messages") or [])
+    normalized_state = normalize_intake_payload(state)
+    state.update(normalized_state)
+    state.setdefault("messages", [])
+    state.setdefault("audit_log", [])
+    state["status"] = "in_progress"
+    state["needs_human_review"] = False
+    state["intake_summary"] = build_intake_summary(state)
     _append_audit(state, "intake: normalized patient intake")
     return state
 
