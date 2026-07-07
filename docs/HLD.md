@@ -1,4 +1,6 @@
-# High-Level Solution Architecture Document (HLD)
+ (Copied from project root HLD.md)
+
+ # High-Level Solution Architecture Document (HLD)
 
 **Project Name:** Multi-Agent Clinical Intelligence Platform (MCIP)  
 **Version:** 1.0  
@@ -99,6 +101,13 @@ Patient data → Intake Agent → Research Agent → Documentation Agent → Com
 
 **ADR-004**: RAG-first approach with strict grounding.  
 **Reason**: Minimize hallucinations and increase trustworthiness.
+
+See extracted ADRs for full rationale and alternatives:
+
+- [ADR 0001: Use LangGraph](../adr/0001-use-langgraph.md)
+- [ADR 0002: Primary LLM = Gemini via Vertex AI](../adr/0002-primary-llm-gemini-vertex-ai.md)
+- [ADR 0003: Human-in-the-Loop by Default](../adr/0003-human-in-the-loop.md)
+- [ADR 0004: RAG-First Approach](../adr/0004-rag-first.md)
 
 ---
 

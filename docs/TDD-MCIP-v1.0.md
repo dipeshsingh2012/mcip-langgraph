@@ -1,4 +1,3 @@
-
 # Technical Design Document (TDD)
 
 **Project Name:** Multi-Agent Clinical Intelligence Platform (MCIP)  
@@ -159,6 +158,3 @@ mcip-langgraph/
 
 **Prepared by:** Grok (Solution Architect)  
 **Date:** July 06, 2026
-
----
-```

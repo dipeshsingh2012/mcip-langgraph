@@ -1,14 +1,5 @@
-"""Minimal runner for MCIP skeleton.
-
-Run this after creating and activating your virtualenv and installing dependencies:
-
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python main.py
-"""
-
-from datetime import datetime
+from datetime import datetime, timezone
+from graph.builder import build_graph, run_graph
 from graph.state import PatientCase
 import json
 
@@ -20,14 +11,15 @@ def create_sample_case():
         medical_history="No chronic illnesses.",
         current_medications=[],
         lab_results="CBC normal",
-        timestamp=datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.now(timezone.utc).isoformat(),
     )
     pc.audit_log.append("Created sample case")
     return pc
 
 
 if __name__ == "__main__":
+    graph = build_graph()
     case = create_sample_case()
-    print("Sample PatientCase JSON:\n")
-    print(json.dumps(case.dict(), indent=2))
-    print("\nNext: implement `graph/builder.py` and LangGraph nodes to run flows.")
+    print("Running MCIP workflow...\n")
+    result = run_graph(graph, case.model_dump())
+    print(json.dumps(result, indent=2))

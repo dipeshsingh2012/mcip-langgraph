@@ -145,3 +145,15 @@ class PatientCase(BaseModel):
 This README serves as your living project bible. Update it as you progress.
 
 **Next Immediate Step**: Set up the basic LangGraph + Vertex AI "Hello World" graph.
+
+## Documentation
+
+Canonical project documentation has been consolidated under the `docs/` folder. Key files:
+
+- [Architecture & HLD](docs/HLD.md)
+- [MVP Scope & Technical Plan](docs/MVP-Scope-and-Technical-Plan-MCIP-v1.0.m)
+- [Technical Design (TDD)](docs/TDD-MCIP-v1.0.md)
+- [Next Steps / Restart Notes](docs/NEXT_STEPS.md)
+- [Repository Setup](docs/REPO-SETUP.md)
+- [ADRs Index](docs/adr_index.md)
+

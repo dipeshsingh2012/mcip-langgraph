@@ -10,7 +10,7 @@ Next steps:
 - Implement node I/O, checkpointing, and persistence
 - Wire LLM calls and retrievers in the Research/Documentation agents
 """
-from typing import Optional
+from typing import Optional, TypedDict
 
 try:
     # langgraph API surface may differ depending on version; adapt as needed.
@@ -18,39 +18,13 @@ try:
 except Exception:  # pragma: no cover - graceful fallback when langgraph isn't installed
     StateGraph = None
 
-
-def _intake_node(state: dict) -> dict:
-    """Simple intake node: normalize incoming patient info.
-
-    Replace with a LangGraph node/handler when wiring into the real graph.
-    """
-    # Example normalization (no side-effects)
-    state.setdefault("symptoms", state.get("symptoms") or [])
-    state.setdefault("medical_history", state.get("medical_history") or "")
-    state.setdefault("audit_log", state.get("audit_log") or [])
-    state["audit_log"].append("intake: normalized")
-    return state
-
-
-def _research_node(state: dict) -> dict:
-    """Placeholder research node.
-
-    Implement RAG retrieval + evidence aggregation here.
-    """
-    state.setdefault("research_results", ["placeholder: no retriever configured"]) 
-    state["audit_log"].append("research: placeholder executed")
-    return state
-
-
-def _documentation_node(state: dict) -> dict:
-    """Placeholder documentation node that drafts a note.
-
-    Replace with LLM call to Gemini/Vertex AI and safety checks.
-    """
-    draft = state.get("draft_note") or "Draft note: (placeholder)"
-    state["draft_note"] = draft
-    state["audit_log"].append("documentation: drafted placeholder note")
-    return state
+from graph.nodes import (
+    compliance_node,
+    documentation_node,
+    finalize_node,
+    intake_node,
+    research_node,
+)
 
 
 def build_graph() -> Optional[object]:
@@ -60,34 +34,77 @@ def build_graph() -> Optional[object]:
     `StateGraph` builder when you have the dependency installed.
     """
     if StateGraph is None:
-        # No runtime available; return a lightweight callable object that
-        # runs the placeholder pipeline for local testing.
         class LocalGraph:
             def run(self, state: dict) -> dict:
-                state = _intake_node(state)
-                state = _research_node(state)
-                state = _documentation_node(state)
+                state = intake_node(state)
+                state = research_node(state)
+                state = documentation_node(state)
+                state = compliance_node(state)
+                state = finalize_node(state)
                 return state
 
         return LocalGraph()
 
-    # Example pattern using a hypothetical StateGraph API. Adjust to match
-    # the version of langgraph you install.
-    g = StateGraph(name="mcip_state_graph")
-
-    # Pseudo-code: real API calls will differ — replace `add_node` with the
-    # appropriate method (e.g., g.add_node or g.add_action).
     try:
-        g.add_node("intake", func=_intake_node)
-        g.add_node("research", func=_research_node)
-        g.add_node("documentation", func=_documentation_node)
-        # Add edges / routing as needed. Example (pseudo):
-        # g.add_edge("intake", "research")
-        # g.add_edge("research", "documentation")
+        g = StateGraph()
+    except TypeError:
+        # Some langgraph versions require a `state_schema` TypedDict at init.
+        # Provide a minimal, permissive schema so the builder can be created.
+        try:
+            StateSchema = TypedDict(
+                "StateSchema",
+                {
+                    "patient_id": str,
+                    "symptoms": list,
+                    "medical_history": str,
+                    "current_medications": list,
+                    "lab_results": str,
+                    "messages": list,
+                    "draft_note": str,
+                    "discharge_summary": str,
+                    "compliance_flags": list,
+                    "status": str,
+                    "needs_human_review": bool,
+                    "audit_log": list,
+                    "timestamp": str,
+                },
+                total=False,
+            )
+            g = StateGraph(state_schema=StateSchema)
+        except Exception:
+            # If instantiation still fails, re-raise the original TypeError
+            raise
+
+    # Prefer the `add_sequence` API for ordered node registration (langgraph v1.2+).
+    try:
+        g.add_sequence([
+            intake_node,
+            research_node,
+            documentation_node,
+            compliance_node,
+            finalize_node,
+        ])
+        # Set entry/finish points using inferred callable names.
+        try:
+            g.set_entry_point("intake_node")
+            g.set_finish_point("finalize_node")
+        except Exception:
+            pass
     except Exception:
-        # If the API differs, keep the graph object but log instructions
-        # in the returned object to implement these bindings later.
-        pass
+        # Fall back to older per-node registration if available.
+        try:
+            g.add_node("intake", func=intake_node)
+            g.add_node("research", func=research_node)
+            g.add_node("documentation", func=documentation_node)
+            g.add_node("compliance", func=compliance_node)
+            g.add_node("finalize", func=finalize_node)
+            try:
+                g.set_entry_point("intake")
+                g.set_finish_point("finalize")
+            except Exception:
+                pass
+        except Exception:
+            pass
 
     return g
 
@@ -95,18 +112,34 @@ def build_graph() -> Optional[object]:
 def run_graph(graph: object, patient_state: dict) -> dict:
     """Execute the provided graph over `patient_state`.
 
-    For the local graph returned when `langgraph` is absent, call `graph.run`.
-    For a real `StateGraph`, adapt to its execution API (e.g., `graph.execute`).
+    For local testing the lightweight `LocalGraph.run` is used.
+    For real `StateGraph` instances, compile with `StateGraph.compile()` and
+    invoke the resulting runnable via `invoke()` / `stream()` / `ainvoke()`.
     """
     if graph is None:
         raise RuntimeError("Graph is not initialized. Call build_graph() first.")
 
-    # LocalGraph uses `run`; langgraph's StateGraph may use a different method.
+    # If the object already implements the Runnable/compiled API, prefer it.
+    if hasattr(graph, "invoke"):
+        return graph.invoke(patient_state)
+
+    # Backwards-compatible local fallback for the lightweight LocalGraph.
     if hasattr(graph, "run"):
         return graph.run(patient_state)
 
     if hasattr(graph, "execute"):
         return graph.execute(patient_state)
 
-    # Fallback: return input unchanged
+    # If we were given a StateGraph builder, compile it to a runnable and invoke.
+    try:
+        from langgraph.graph import StateGraph
+    except Exception:
+        StateGraph = None
+
+    if StateGraph is not None and isinstance(graph, StateGraph):
+        compiled = graph.compile()
+        if hasattr(compiled, "invoke"):
+            return compiled.invoke(patient_state)
+
+    # Fallback: return the input state unchanged
     return patient_state

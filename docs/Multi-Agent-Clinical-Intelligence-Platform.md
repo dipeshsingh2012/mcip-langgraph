@@ -162,15 +162,6 @@ class PatientCase(TypedDict):
 ---
 
 **Start coding with GitHub Copilot** — use this file as your main guide.
-Copy sections into separate files as you build.
-
-Good luck! This can become a standout project.
 ```
 
-This is a comprehensive starter. Let me know if you want me to expand specific sections (e.g., full code skeletons for state, graph builder, or individual agents). I can generate more detailed files. 
-
-To use it:
-1. Copy the content above into a new `README.md` in your repo.
-2. Use Copilot to generate code based on the structure and comments. 
-
-Would you like additional files like `graph/builder.py` skeleton or a `requirements.txt`?
+This file is a comprehensive starter. Let me know if you want me to expand specific sections (e.g., full code skeletons for state, graph builder, or individual agents). I can generate more detailed files.

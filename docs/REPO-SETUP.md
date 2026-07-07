@@ -100,10 +100,9 @@ Example Copilot Prompts:
 Set up repository and environment
 Implement core PatientCase state
 Build basic LangGraph skeleton (happy path)
-Integrate Vertex AI Gemini
+Integrate Vertex AI
 Create first working end-to-end flow (simple version)
 Add basic LangSmith tracing
-
 
 6. Git Best Practices
 
@@ -111,7 +110,19 @@ Main branch protected
 Feature branches: feature/intake-agent, feature/rag-integration
 Commit messages: Conventional style (feat:, fix:, docs:)
 
-
 Next Action: After creating this structure, start with graph/state.py and graph/builder.py.
 Prepared by: Grok (Solution Architect)
 Date: July 06, 2026
+
+## Developer tooling: pre-commit hooks
+
+Install and enable the repository's pre-commit hooks to run formatters and linters automatically on commit:
+
+```bash
+source venv/bin/activate
+pip install pre-commit
+pre-commit install
+pre-commit run --all-files   # optional: run hooks once across the repo
+```
+
+The repository includes `.pre-commit-config.yaml` with `black`, `isort`, `ruff`, and basic hygiene hooks.
